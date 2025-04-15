@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/form';
 import Logo from '@/components/ui/logo';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/components/ui/use-toast';
 
 const formSchema = z.object({
   username: z.string().min(3, { message: 'Username must be at least 3 characters.' }),
@@ -32,6 +33,8 @@ type FormValues = z.infer<typeof formSchema>;
 const Register: React.FC = () => {
   const { register: registerUser } = useAuth();
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -42,6 +45,34 @@ const Register: React.FC = () => {
       role: 'architect',
     },
   });
+
+  // Function to create default accounts
+  const createDefaultAccount = async (role: 'architect' | 'homeowner') => {
+    setLoading(true);
+    try {
+      const email = role === 'architect' ? 'architect@yopmail.com' : 'homeowner@yopmail.com';
+      const username = role === 'architect' ? 'DefaultArchitect' : 'DefaultHomeowner';
+      const password = 'Test@123';
+      
+      await registerUser(email, password, username, role);
+      
+      toast({
+        title: `Default ${role} account created`,
+        description: `Email: ${email}, Password: Test@123`,
+        duration: 5000,
+      });
+    } catch (error: any) {
+      toast({
+        title: `Failed to create default ${role} account`,
+        description: error.message || `An error occurred creating the ${role} account`,
+        variant: "destructive",
+        duration: 5000,
+      });
+      console.error(`Error creating default ${role} account:`, error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const onSubmit = async (data: FormValues) => {
     try {
@@ -137,6 +168,30 @@ const Register: React.FC = () => {
               </Button>
             </form>
           </Form>
+          
+          <div className="mt-6 space-y-3">
+            <div className="text-sm text-center text-muted-foreground mb-2">Or create default accounts:</div>
+            <div className="flex space-x-3">
+              <Button 
+                type="button" 
+                className="flex-1" 
+                variant="outline" 
+                onClick={() => createDefaultAccount('architect')}
+                disabled={loading}
+              >
+                Create Architect Account
+              </Button>
+              <Button 
+                type="button" 
+                className="flex-1" 
+                variant="outline" 
+                onClick={() => createDefaultAccount('homeowner')}
+                disabled={loading}
+              >
+                Create Homeowner Account
+              </Button>
+            </div>
+          </div>
         </CardContent>
         <CardFooter className="flex justify-center">
           <p className="text-sm text-muted-foreground">

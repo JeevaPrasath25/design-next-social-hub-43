@@ -1,12 +1,9 @@
-
 import { createClient } from '@supabase/supabase-js';
 import { User, UserRole, Post, ProfileStats, Follower, SavedPost, Like, HiredArchitect } from '@/types';
+import { supabase as configuredSupabase } from '@/integrations/supabase/client';
 
-// Supabase client will be properly configured when connected through the Lovable interface
-const supabaseUrl = 'https://your-project-url.supabase.co';
-const supabaseAnonKey = 'your-anon-key';
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Use the configured Supabase client from the integration
+export const supabase = configuredSupabase;
 
 // Auth functions
 export const signUp = async (email: string, password: string, username: string, role: UserRole) => {
@@ -23,6 +20,23 @@ export const signUp = async (email: string, password: string, username: string, 
     });
 
     if (authError) throw authError;
+
+    // Create a user profile in the users table
+    if (authData.user) {
+      const { error: profileError } = await supabase
+        .from('users')
+        .insert({
+          id: authData.user.id,
+          email: authData.user.email,
+          username,
+          role
+        });
+
+      if (profileError) {
+        console.error('Error creating user profile:', profileError);
+        throw profileError;
+      }
+    }
 
     return { user: authData.user, session: authData.session };
   } catch (error) {
