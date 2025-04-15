@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 import { User, UserRole, Post, ProfileStats, Follower, SavedPost, Like, HiredArchitect } from '@/types';
 import { supabase as configuredSupabase } from '@/integrations/supabase/client';
