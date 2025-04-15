@@ -1,5 +1,4 @@
 
-import { createClient } from '@supabase/supabase-js';
 import { User, UserRole, Post, ProfileStats, Follower, SavedPost, Like, HiredArchitect } from '@/types';
 import { supabase as configuredSupabase } from '@/integrations/supabase/client';
 
@@ -213,13 +212,18 @@ export const createPost = async (postData: Partial<Post>, imageFile: File) => {
     const imageUrl = urlData.publicUrl;
     
     // 3. Create post in the database
+    // Ensure required fields are present
+    if (!postData.title || !postData.user_id) {
+      throw new Error("Title and user_id are required for creating a post");
+    }
+    
     const { data, error } = await supabase
       .from('posts')
       .insert({
-        title: postData.title as string,
-        description: postData.description,
+        title: postData.title,
+        description: postData.description || null,
         image_url: imageUrl,
-        user_id: postData.user_id as string
+        user_id: postData.user_id
       })
       .select()
       .single();

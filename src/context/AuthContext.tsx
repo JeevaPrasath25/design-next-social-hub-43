@@ -2,7 +2,7 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, UserRole } from '@/types';
-import { supabase, getCurrentUser, signIn, signUp, signOut } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
 
 interface AuthContextType {
@@ -21,6 +21,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Get the current user and their profile data
+  const getCurrentUser = async () => {
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      
+      if (!authUser) return null;
+      
+      // Get the user profile from the users table
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', authUser.id)
+        .single();
+      
+      if (error) throw error;
+      
+      return {
+        ...data,
+        role: data.role as UserRole,
+        contact: data.contact_details
+      } as User;
+    } catch (error) {
+      console.error('Error getting current user:', error);
+      return null;
+    }
+  };
 
   useEffect(() => {
     const checkUser = async () => {
@@ -54,14 +81,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
-      await signIn(email, password);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (error) throw error;
+      
       const user = await getCurrentUser();
       setUser(user);
+      
       toast({
         title: "Login successful",
         description: "Welcome back!",
         duration: 3000,
       });
+      
       navigate('/dashboard');
     } catch (error: any) {
       toast({
@@ -79,13 +114,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (email: string, password: string, username: string, role: UserRole) => {
     try {
       setLoading(true);
-      await signUp(email, password, username, role);
+      
+      // 1. Sign up with Supabase Auth
+      const { data, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            username,
+            role
+          }
+        }
+      });
+      
+      if (authError) throw authError;
+      
+      if (!data.user) {
+        throw new Error('User creation failed');
+      }
+      
+      // 2. Create user profile in public.users table
+      const { error: profileError } = await supabase
+        .from('users')
+        .insert({
+          id: data.user.id,
+          email: data.user.email,
+          username,
+          role
+        });
+      
+      if (profileError) {
+        // If profile creation fails, we should clean up the auth user
+        console.error('Error creating user profile:', profileError);
+        throw profileError;
+      }
+      
       toast({
         title: "Registration successful",
         description: "Please log in with your new account",
         duration: 3000,
       });
-      navigate('/login');
+      
     } catch (error: any) {
       toast({
         title: "Registration failed",
@@ -102,7 +171,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     try {
       setLoading(true);
-      await signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
       setUser(null);
       toast({
         title: "Logged out",

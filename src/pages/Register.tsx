@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -47,39 +47,23 @@ const Register: React.FC = () => {
     },
   });
 
-  // Function to create default accounts
-  const createDefaultAccount = async (role: UserRole) => {
-    setLoading(true);
-    try {
-      const email = role === 'architect' ? 'architect@yopmail.com' : 'homeowner@yopmail.com';
-      const username = role === 'architect' ? 'DefaultArchitect' : 'DefaultHomeowner';
-      const password = 'Test@123';
-      
-      await registerUser(email, password, username, role);
-      
-      toast({
-        title: `Default ${role} account created`,
-        description: `Email: ${email}, Password: Test@123`,
-        duration: 5000,
-      });
-    } catch (error: any) {
-      toast({
-        title: `Failed to create default ${role} account`,
-        description: error.message || `An error occurred creating the ${role} account`,
-        variant: "destructive",
-        duration: 5000,
-      });
-      console.error(`Error creating default ${role} account:`, error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const onSubmit = async (data: FormValues) => {
     try {
       setLoading(true);
       await registerUser(data.email, data.password, data.username, data.role);
-    } catch (error) {
+      toast({
+        title: "Registration successful",
+        description: "Please log in with your new account",
+        duration: 3000,
+      });
+      navigate('/login');
+    } catch (error: any) {
+      toast({
+        title: "Registration failed",
+        description: error.message || "An error occurred during registration",
+        variant: "destructive",
+        duration: 3000,
+      });
       console.error('Registration error:', error);
     } finally {
       setLoading(false);
@@ -169,30 +153,6 @@ const Register: React.FC = () => {
               </Button>
             </form>
           </Form>
-          
-          <div className="mt-6 space-y-3">
-            <div className="text-sm text-center text-muted-foreground mb-2">Or create default accounts:</div>
-            <div className="flex space-x-3">
-              <Button 
-                type="button" 
-                className="flex-1" 
-                variant="outline" 
-                onClick={() => createDefaultAccount('architect')}
-                disabled={loading}
-              >
-                Create Architect Account
-              </Button>
-              <Button 
-                type="button" 
-                className="flex-1" 
-                variant="outline" 
-                onClick={() => createDefaultAccount('homeowner')}
-                disabled={loading}
-              >
-                Create Homeowner Account
-              </Button>
-            </div>
-          </div>
         </CardContent>
         <CardFooter className="flex justify-center">
           <p className="text-sm text-muted-foreground">
