@@ -1,4 +1,3 @@
-
 import { User, UserRole, Post, ProfileStats, Follower, SavedPost, Like, HiredArchitect } from '@/types';
 import { supabase as configuredSupabase } from '@/integrations/supabase/client';
 
@@ -21,23 +20,7 @@ export const signUp = async (email: string, password: string, username: string, 
 
     if (authError) throw authError;
 
-    // Create a user profile in the users table
-    if (authData.user) {
-      const { error: profileError } = await supabase
-        .from('users')
-        .insert({
-          id: authData.user.id,
-          email: authData.user.email,
-          username,
-          role
-        });
-
-      if (profileError) {
-        console.error('Error creating user profile:', profileError);
-        throw profileError;
-      }
-    }
-
+    // No need to manually create user profile here - it's handled by the trigger
     return { user: authData.user, session: authData.session };
   } catch (error) {
     console.error('Error signing up:', error);

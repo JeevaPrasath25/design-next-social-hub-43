@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -50,7 +49,7 @@ const Register: React.FC = () => {
   const onSubmit = async (data: FormValues) => {
     try {
       setLoading(true);
-      await registerUser(data.email, data.password, data.username, data.role);
+      await registerUser(data.email, data.password, data.username, data.role as UserRole);
       toast({
         title: "Registration successful",
         description: "Please log in with your new account",
@@ -58,13 +57,13 @@ const Register: React.FC = () => {
       });
       navigate('/login');
     } catch (error: any) {
+      console.error('Registration error:', error);
       toast({
         title: "Registration failed",
         description: error.message || "An error occurred during registration",
         variant: "destructive",
         duration: 3000,
       });
-      console.error('Registration error:', error);
     } finally {
       setLoading(false);
     }

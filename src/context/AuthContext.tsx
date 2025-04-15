@@ -36,11 +36,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('id', authUser.id)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error getting user profile:', error);
+        return null;
+      }
       
       return {
         ...data,
-        role: data.role as UserRole,
+        role: data.role as UserRole, // Cast the role to UserRole
         contact: data.contact_details
       } as User;
     } catch (error) {
@@ -50,10 +53,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    const checkUser = async () => {
+    // Set up the auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+          setLoading(true);
+          // Don't call other Supabase functions directly in the callback
+          // Use setTimeout to defer the operation
+          setTimeout(async () => {
+            const user = await getCurrentUser();
+            setUser(user);
+            setLoading(false);
+          }, 0);
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
+          navigate('/login');
+        }
+      }
+    );
+
+    // THEN check for existing session
+    const initializeUser = async () => {
       try {
-        const user = await getCurrentUser();
-        setUser(user);
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+          const user = await getCurrentUser();
+          setUser(user);
+        }
       } catch (error) {
         console.error('Error checking user:', error);
       } finally {
@@ -61,20 +88,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
 
-    checkUser();
-
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
-        const user = await getCurrentUser();
-        setUser(user);
-      } else if (event === 'SIGNED_OUT') {
-        setUser(null);
-        navigate('/login');
-      }
-    });
+    initializeUser();
 
     return () => {
-      authListener?.subscription.unsubscribe();
+      subscription.unsubscribe();
     };
   }, [navigate]);
 
@@ -88,8 +105,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (error) throw error;
       
-      const user = await getCurrentUser();
-      setUser(user);
+      // User data will be set by the auth state listener
       
       toast({
         title: "Login successful",
@@ -115,8 +131,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setLoading(true);
       
-      // 1. Sign up with Supabase Auth
-      const { data, error: authError } = await supabase.auth.signUp({
+      // Sign up with Supabase Auth, including metadata for the trigger
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -127,27 +143,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       });
       
-      if (authError) throw authError;
+      if (error) throw error;
       
-      if (!data.user) {
-        throw new Error('User creation failed');
-      }
-      
-      // 2. Create user profile in public.users table
-      const { error: profileError } = await supabase
-        .from('users')
-        .insert({
-          id: data.user.id,
-          email: data.user.email,
-          username,
-          role
-        });
-      
-      if (profileError) {
-        // If profile creation fails, we should clean up the auth user
-        console.error('Error creating user profile:', profileError);
-        throw profileError;
-      }
+      // The users table entry will be created by the database trigger
       
       toast({
         title: "Registration successful",
@@ -155,6 +153,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         duration: 3000,
       });
       
+      navigate('/login');
     } catch (error: any) {
       toast({
         title: "Registration failed",
