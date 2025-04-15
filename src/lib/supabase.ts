@@ -87,7 +87,12 @@ export const getCurrentUser = async (): Promise<User | null> => {
     
     if (error) throw error;
     
-    return data;
+    // Cast role to UserRole type
+    return {
+      ...data,
+      role: data.role as UserRole,
+      contact: data.contact_details
+    } as User;
   } catch (error) {
     console.error('Error getting current user:', error);
     return null;
@@ -106,7 +111,12 @@ export const updateUserProfile = async (userId: string, updates: Partial<User>) 
     
     if (error) throw error;
     
-    return data;
+    // Cast role to UserRole type
+    return {
+      ...data,
+      role: data.role as UserRole,
+      contact: data.contact_details
+    } as User;
   } catch (error) {
     console.error('Error updating profile:', error);
     throw error;
@@ -206,8 +216,10 @@ export const createPost = async (postData: Partial<Post>, imageFile: File) => {
     const { data, error } = await supabase
       .from('posts')
       .insert({
-        ...postData,
-        image_url: imageUrl
+        title: postData.title as string,
+        description: postData.description,
+        image_url: imageUrl,
+        user_id: postData.user_id as string
       })
       .select()
       .single();
@@ -239,7 +251,15 @@ export const getPosts = async (userId?: string) => {
     
     if (error) throw error;
     
-    return data;
+    // Transform data to match our types
+    return data.map(post => ({
+      ...post,
+      user: post.user ? {
+        ...post.user,
+        role: post.user.role as UserRole,
+        contact: post.user.contact_details
+      } : undefined
+    })) as Post[];
   } catch (error) {
     console.error('Error getting posts:', error);
     throw error;
@@ -286,10 +306,15 @@ export const getPostWithLikeAndSaveStatus = async (postId: string, userId: strin
     
     return {
       ...post,
+      user: post.user ? {
+        ...post.user,
+        role: post.user.role as UserRole,
+        contact: post.user.contact_details
+      } : undefined,
       is_liked: !!likeData,
       is_saved: !!saveData,
       likes_count: likesCount || 0
-    };
+    } as Post;
   } catch (error) {
     console.error('Error getting post with status:', error);
     throw error;
@@ -418,7 +443,14 @@ export const getFollowers = async (userId: string) => {
     
     if (error) throw error;
     
-    return data;
+    return data.map(item => ({
+      ...item,
+      follower: item.follower ? {
+        ...item.follower,
+        role: item.follower.role as UserRole,
+        contact: item.follower.contact_details
+      } : undefined
+    })) as Follower[];
   } catch (error) {
     console.error('Error getting followers:', error);
     throw error;
@@ -437,7 +469,14 @@ export const getFollowing = async (userId: string) => {
     
     if (error) throw error;
     
-    return data;
+    return data.map(item => ({
+      ...item,
+      following: item.following ? {
+        ...item.following,
+        role: item.following.role as UserRole,
+        contact: item.following.contact_details
+      } : undefined
+    }));
   } catch (error) {
     console.error('Error getting following:', error);
     throw error;
@@ -457,7 +496,17 @@ export const getSavedPosts = async (userId: string) => {
     
     if (error) throw error;
     
-    return data;
+    return data.map(item => ({
+      ...item,
+      post: item.post ? {
+        ...item.post,
+        user: item.post.user ? {
+          ...item.post.user,
+          role: item.post.user.role as UserRole,
+          contact: item.post.user.contact_details
+        } : undefined
+      } : undefined
+    })) as SavedPost[];
   } catch (error) {
     console.error('Error getting saved posts:', error);
     throw error;
@@ -474,10 +523,17 @@ export const getArchitects = async (currentUserId?: string) => {
     
     if (error) throw error;
     
+    // Map data to match our User type
+    const architectsWithRoleCast = data.map(architect => ({
+      ...architect,
+      role: architect.role as UserRole,
+      contact: architect.contact_details
+    })) as User[];
+    
     // If current user is provided, check following and hired status for each architect
     if (currentUserId) {
       const architects = await Promise.all(
-        data.map(async (architect) => {
+        architectsWithRoleCast.map(async (architect) => {
           const stats = await getProfileStats(architect.id, currentUserId);
           return {
             ...architect,
@@ -490,7 +546,7 @@ export const getArchitects = async (currentUserId?: string) => {
       return architects;
     }
     
-    return data;
+    return architectsWithRoleCast;
   } catch (error) {
     console.error('Error getting architects:', error);
     throw error;
@@ -510,7 +566,14 @@ export const getHiredArchitects = async (homeownerId: string) => {
     
     if (error) throw error;
     
-    return data;
+    return data.map(item => ({
+      ...item,
+      architect: item.architect ? {
+        ...item.architect,
+        role: item.architect.role as UserRole,
+        contact: item.architect.contact_details
+      } : undefined
+    })) as HiredArchitect[];
   } catch (error) {
     console.error('Error getting hired architects:', error);
     throw error;

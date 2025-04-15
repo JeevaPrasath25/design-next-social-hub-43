@@ -20,6 +20,7 @@ import {
 import Logo from '@/components/ui/logo';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
+import { UserRole } from '@/types';
 
 const formSchema = z.object({
   username: z.string().min(3, { message: 'Username must be at least 3 characters.' }),
@@ -47,7 +48,7 @@ const Register: React.FC = () => {
   });
 
   // Function to create default accounts
-  const createDefaultAccount = async (role: 'architect' | 'homeowner') => {
+  const createDefaultAccount = async (role: UserRole) => {
     setLoading(true);
     try {
       const email = role === 'architect' ? 'architect@yopmail.com' : 'homeowner@yopmail.com';

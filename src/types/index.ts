@@ -8,6 +8,10 @@ export interface User {
   role: UserRole;
   contact?: string;
   created_at: string;
+  avatar_url?: string; 
+  bio?: string;
+  contact_details?: string;
+  updated_at?: string;
 }
 
 export interface Post {
@@ -17,6 +21,7 @@ export interface Post {
   image_url: string;
   user_id: string;
   created_at: string;
+  updated_at?: string;
   user?: User;
   likes_count?: number;
   is_liked?: boolean;

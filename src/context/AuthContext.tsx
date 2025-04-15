@@ -1,7 +1,7 @@
 
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User } from '@/types';
+import { User, UserRole } from '@/types';
 import { supabase, getCurrentUser, signIn, signUp, signOut } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -9,7 +9,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, username: string, role: 'architect' | 'homeowner') => Promise<void>;
+  register: (email: string, password: string, username: string, role: UserRole) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (user: User) => void;
 }
@@ -76,7 +76,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const register = async (email: string, password: string, username: string, role: 'architect' | 'homeowner') => {
+  const register = async (email: string, password: string, username: string, role: UserRole) => {
     try {
       setLoading(true);
       await signUp(email, password, username, role);
