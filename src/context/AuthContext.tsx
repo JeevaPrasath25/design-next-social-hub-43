@@ -2,7 +2,7 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, UserRole } from '@/types';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
 interface AuthContextType {
@@ -43,21 +43,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (!data) {
         // Create a default user profile if it doesn't exist
-        const defaultUser = {
+        const defaultUser: User = {
           id: authUser.id,
-          email: authUser.email,
+          email: authUser.email || '',
           username: authUser.user_metadata?.username || authUser.email?.split('@')[0] || 'User',
           role: (authUser.user_metadata?.role || 'homeowner') as UserRole,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           avatar_url: null,
           bio: null,
-          contact_details: null
+          contact: null,
         };
         
         const { data: newUser, error: insertError } = await supabase
           .from('users')
-          .insert(defaultUser)
+          .insert({
+            id: defaultUser.id,
+            email: defaultUser.email,
+            username: defaultUser.username,
+            role: defaultUser.role,
+            created_at: defaultUser.created_at,
+            updated_at: defaultUser.updated_at,
+            avatar_url: defaultUser.avatar_url,
+            bio: defaultUser.bio,
+            contact_details: defaultUser.contact
+          })
           .select()
           .single();
           
