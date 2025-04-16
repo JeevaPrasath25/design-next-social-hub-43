@@ -13,6 +13,12 @@ export interface User {
   bio: string | null;
   contact: string | null;
   contact_details?: string | null; // For database compatibility
+  contact_email?: string | null;
+  education?: string | null;
+  experience?: string | null;
+  skills?: string | null;
+  social_links?: string | null;
+  rating?: number | null;
   is_following?: boolean;
   is_hired?: boolean;
 }
