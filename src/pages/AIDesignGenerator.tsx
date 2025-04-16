@@ -48,13 +48,13 @@ const AIDesignGenerator: React.FC = () => {
               <CardHeader>
                 <CardTitle>AI Design Generator</CardTitle>
                 <CardDescription>
-                  Describe your design idea and our AI will generate a visualization
+                  Describe your design idea in detail and our AI will generate a visualization
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
                   <Textarea
-                    placeholder="Describe your design idea (e.g., modern house with glass facade and rooftop garden)"
+                    placeholder="Be specific about architecture details, materials, style, and setting. Example: 'A modern minimalist house with large glass windows, flat roof, concrete and wood exterior, surrounded by pine trees with mountains in the background.'"
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
                     className="min-h-[150px] resize-none"
