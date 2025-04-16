@@ -14,7 +14,7 @@ interface EnhancedProfileSectionProps {
 }
 
 const EnhancedProfileSection: React.FC<EnhancedProfileSectionProps> = ({ user, updateUser }) => {
-  const toast = useToast();
+  const { toast } = useToast();
   const { form, loading, isEditing, setIsEditing, handleSubmit } = useEnhancedProfileForm(user, toast, updateUser);
 
   return (

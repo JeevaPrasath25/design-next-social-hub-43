@@ -1,9 +1,10 @@
 
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import Logo from '@/components/ui/logo';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
+import { useNavigation } from '@/hooks/useNavigation';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,25 +13,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Home, User, LogOut, Plus, Heart, Bookmark, Settings, Users } from 'lucide-react';
+import { 
+  Home, User, LogOut, Plus, 
+  Heart, Bookmark, Users, ImagePlus 
+} from 'lucide-react';
 
 const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
-
-  const handleNavigation = (path: string) => {
-    // Handle hash navigation specially
-    if (path.includes('#')) {
-      const [route, hash] = path.split('#');
-      navigate(route);
-      setTimeout(() => {
-        const element = document.getElementById(hash);
-        if (element) element.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
-      return;
-    }
-    navigate(path);
-  };
+  const { 
+    goToDashboard, 
+    goToAIGenerator,
+    goToProfile, 
+    goToExploreArchitects 
+  } = useNavigation();
 
   return (
     <header className="border-b bg-white sticky top-0 z-20">
@@ -40,26 +35,34 @@ const Navbar: React.FC = () => {
         <nav className="hidden md:flex items-center space-x-6">
           {user ? (
             <>
-              <Link 
-                to={user.role === 'architect' ? '/architect-dashboard' : '/homeowner-dashboard'} 
+              <button
+                onClick={goToDashboard}
                 className="flex items-center text-sm font-medium transition-colors hover:text-primary"
               >
                 <Home className="w-4 h-4 mr-1" />
                 Dashboard
-              </Link>
+              </button>
               
               {user.role === 'architect' && (
-                <button 
-                  onClick={() => handleNavigation('/architect-dashboard#post-design')}
+                <Link 
+                  to="/post/create"
                   className="flex items-center text-sm font-medium transition-colors hover:text-primary"
                 >
                   <Plus className="w-4 h-4 mr-1" />
                   Post Design
-                </button>
+                </Link>
               )}
               
-              <button 
-                onClick={() => navigate('/explore-architects')}
+              <button
+                onClick={goToAIGenerator}
+                className="flex items-center text-sm font-medium transition-colors hover:text-primary"
+              >
+                <ImagePlus className="w-4 h-4 mr-1" />
+                AI Generator
+              </button>
+              
+              <button
+                onClick={goToExploreArchitects}
                 className="flex items-center text-sm font-medium transition-colors hover:text-primary"
               >
                 <Users className="w-4 h-4 mr-1" />
@@ -82,30 +85,26 @@ const Navbar: React.FC = () => {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate(user.role === 'architect' ? '/architect-dashboard' : '/homeowner-dashboard')}>
+                  <DropdownMenuItem onClick={goToDashboard}>
                     <Home className="mr-2 h-4 w-4" />
                     <span>Dashboard</span>
                   </DropdownMenuItem>
-                  {user.role === 'architect' && (
-                    <DropdownMenuItem onClick={() => handleNavigation('/architect-dashboard#post-design')}>
-                      <Plus className="mr-2 h-4 w-4" />
-                      <span>Post Design</span>
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem onClick={() => navigate('/explore-architects')}>
+                  <DropdownMenuItem onClick={goToProfile}>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={goToAIGenerator}>
+                    <ImagePlus className="mr-2 h-4 w-4" />
+                    <span>AI Generator</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => goToExploreArchitects()}>
                     <Users className="mr-2 h-4 w-4" />
                     <span>Find Architects</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/saved')}>
+                  <DropdownMenuItem onClick={() => window.location.href = '/saved'}>
                     <Bookmark className="mr-2 h-4 w-4" />
                     <span>Saved Designs</span>
                   </DropdownMenuItem>
-                  {user.role === 'architect' && (
-                    <DropdownMenuItem onClick={() => handleNavigation('/architect-dashboard#following')}>
-                      <Heart className="mr-2 h-4 w-4" />
-                      <span>Following</span>
-                    </DropdownMenuItem>
-                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => logout()}>
                     <LogOut className="mr-2 h-4 w-4" />
@@ -160,30 +159,26 @@ const Navbar: React.FC = () => {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate(user.role === 'architect' ? '/architect-dashboard' : '/homeowner-dashboard')}>
+                  <DropdownMenuItem onClick={goToDashboard}>
                     <Home className="mr-2 h-4 w-4" />
                     <span>Dashboard</span>
                   </DropdownMenuItem>
-                  {user.role === 'architect' && (
-                    <DropdownMenuItem onClick={() => handleNavigation('/architect-dashboard#post-design')}>
-                      <Plus className="mr-2 h-4 w-4" />
-                      <span>Post Design</span>
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem onClick={() => navigate('/explore-architects')}>
+                  <DropdownMenuItem onClick={goToProfile}>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={goToAIGenerator}>
+                    <ImagePlus className="mr-2 h-4 w-4" />
+                    <span>AI Generator</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={goToExploreArchitects}>
                     <Users className="mr-2 h-4 w-4" />
                     <span>Find Architects</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/saved')}>
+                  <DropdownMenuItem onClick={() => window.location.href = '/saved'}>
                     <Bookmark className="mr-2 h-4 w-4" />
                     <span>Saved Designs</span>
                   </DropdownMenuItem>
-                  {user.role === 'architect' && (
-                    <DropdownMenuItem onClick={() => handleNavigation('/architect-dashboard#following')}>
-                      <Heart className="mr-2 h-4 w-4" />
-                      <span>Following</span>
-                    </DropdownMenuItem>
-                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => logout()}>
                     <LogOut className="mr-2 h-4 w-4" />
@@ -192,10 +187,10 @@ const Navbar: React.FC = () => {
                 </>
               ) : (
                 <>
-                  <DropdownMenuItem onClick={() => navigate('/login')}>
+                  <DropdownMenuItem onClick={() => window.location.href = '/login'}>
                     Log in
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/register')}>
+                  <DropdownMenuItem onClick={() => window.location.href = '/register'}>
                     Sign up
                   </DropdownMenuItem>
                 </>

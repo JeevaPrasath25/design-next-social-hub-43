@@ -5,10 +5,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { User } from '@/types';
 import { updateEnhancedProfile } from '@/lib/api';
 import { EnhancedProfileFormValues, enhancedProfileSchema } from '@/components/dashboard/profile/EnhancedProfileForm';
-import { useToast } from '@/hooks/use-toast';
 
-// Define the toast function type based on what's returned from useToast
-interface ToastType {
+// Define toast interface to avoid type errors
+interface ToastProps {
   toast: (props: {
     title: string;
     description: string;
@@ -16,31 +15,34 @@ interface ToastType {
   }) => void;
 }
 
-export const useEnhancedProfileForm = (user: User, toast: ToastType, updateUser: (user: User) => void) => {
+export const useEnhancedProfileForm = (user: User, toast: ToastProps, updateUser: (user: User) => void) => {
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   
   const form = useForm<EnhancedProfileFormValues>({
     resolver: zodResolver(enhancedProfileSchema),
     defaultValues: {
-      education: user?.education || '',
-      experience: user?.experience || '',
-      skills: user?.skills || '',
-      contact_email: user?.contact_email || '',
-      social_links: user?.social_links || '',
-    },
+      education: user.education || '',
+      experience: user.experience || '',
+      skills: user.skills || [],
+      contact_email: user.contact_email || '',
+      social_links: user.social_links || {
+        website: '',
+        linkedin: '',
+        twitter: '',
+        instagram: ''
+      }
+    }
   });
-
+  
   const handleSubmit = async (data: EnhancedProfileFormValues) => {
-    if (!user) return;
-    
     try {
       setLoading(true);
       
-      // Update enhanced profile in Supabase
-      const updatedUser = await updateEnhancedProfile(user.id, data);
+      const updatedUser = await updateEnhancedProfile(user.id, {
+        ...data
+      });
       
-      // Update user context with new data
       updateUser({
         ...user,
         ...updatedUser
@@ -63,12 +65,12 @@ export const useEnhancedProfileForm = (user: User, toast: ToastType, updateUser:
       setLoading(false);
     }
   };
-
+  
   return {
     form,
     loading,
     isEditing,
     setIsEditing,
-    handleSubmit
+    handleSubmit,
   };
 };
