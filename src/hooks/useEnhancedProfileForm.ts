@@ -24,14 +24,9 @@ export const useEnhancedProfileForm = (user: User, toast: ToastProps, updateUser
     defaultValues: {
       education: user.education || '',
       experience: user.experience || '',
-      skills: user.skills || [],
+      skills: user.skills || '',
       contact_email: user.contact_email || '',
-      social_links: user.social_links || {
-        website: '',
-        linkedin: '',
-        twitter: '',
-        instagram: ''
-      }
+      social_links: user.social_links || ''
     }
   });
   
