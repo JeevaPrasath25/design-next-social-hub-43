@@ -121,8 +121,11 @@ export type Database = {
         Row: {
           created_at: string
           description: string | null
+          design_type: string | null
+          hire_me: boolean | null
           id: string
           image_url: string
+          tags: string[] | null
           title: string
           updated_at: string
           user_id: string
@@ -130,8 +133,11 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
+          design_type?: string | null
+          hire_me?: boolean | null
           id?: string
           image_url: string
+          tags?: string[] | null
           title: string
           updated_at?: string
           user_id: string
@@ -139,8 +145,11 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string | null
+          design_type?: string | null
+          hire_me?: boolean | null
           id?: string
           image_url?: string
+          tags?: string[] | null
           title?: string
           updated_at?: string
           user_id?: string
@@ -196,10 +205,16 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           contact_details: string | null
+          contact_email: string | null
           created_at: string
+          education: string | null
           email: string
+          experience: string | null
           id: string
+          rating: number | null
           role: string
+          skills: string | null
+          social_links: string | null
           updated_at: string
           username: string
         }
@@ -207,10 +222,16 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           contact_details?: string | null
+          contact_email?: string | null
           created_at?: string
+          education?: string | null
           email: string
+          experience?: string | null
           id: string
+          rating?: number | null
           role: string
+          skills?: string | null
+          social_links?: string | null
           updated_at?: string
           username: string
         }
@@ -218,10 +239,16 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           contact_details?: string | null
+          contact_email?: string | null
           created_at?: string
+          education?: string | null
           email?: string
+          experience?: string | null
           id?: string
+          rating?: number | null
           role?: string
+          skills?: string | null
+          social_links?: string | null
           updated_at?: string
           username?: string
         }

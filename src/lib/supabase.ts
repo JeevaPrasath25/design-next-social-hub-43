@@ -84,16 +84,30 @@ export const getCurrentUser = async (): Promise<User | null> => {
 // Profile functions
 export const updateUserProfile = async (userId: string, updates: Partial<User>) => {
   try {
+    // Convert contact to contact_details for database compatibility
+    const dbUpdates = {
+      ...updates,
+      contact_details: updates.contact,
+    };
+    
+    // Remove contact field from updates if it exists, as it doesn't exist in DB schema
+    if (dbUpdates.contact) {
+      delete dbUpdates.contact;
+    }
+    
     const { data, error } = await supabase
       .from('users')
-      .update(updates)
+      .update(dbUpdates)
       .eq('id', userId)
       .select()
       .single();
     
-    if (error) throw error;
+    if (error) {
+      console.error('Error updating profile:', error);
+      throw error;
+    }
     
-    // Cast role to UserRole type
+    // Cast role to UserRole type and map contact_details to contact
     return {
       ...data,
       role: data.role as UserRole,
