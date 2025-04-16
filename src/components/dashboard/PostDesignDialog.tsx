@@ -22,7 +22,7 @@ const PostDesignDialog: React.FC<PostDesignDialogProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button className="gap-2">
+        <Button className="gap-2" id="post-design-trigger">
           <Upload className="h-4 w-4" /> Upload New Design
         </Button>
       </DialogTrigger>

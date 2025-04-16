@@ -18,6 +18,20 @@ const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
+  const handleNavigation = (path: string) => {
+    // Handle hash navigation specially
+    if (path.includes('#')) {
+      const [route, hash] = path.split('#');
+      navigate(route);
+      setTimeout(() => {
+        const element = document.getElementById(hash);
+        if (element) element.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+      return;
+    }
+    navigate(path);
+  };
+
   return (
     <header className="border-b bg-white sticky top-0 z-20">
       <div className="container flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
@@ -27,7 +41,7 @@ const Navbar: React.FC = () => {
           {user ? (
             <>
               <Link 
-                to="/dashboard" 
+                to={user.role === 'architect' ? '/architect-dashboard' : '/homeowner-dashboard'} 
                 className="flex items-center text-sm font-medium transition-colors hover:text-primary"
               >
                 <Home className="w-4 h-4 mr-1" />
@@ -35,22 +49,22 @@ const Navbar: React.FC = () => {
               </Link>
               
               {user.role === 'architect' && (
-                <Link 
-                  to="/post/create" 
+                <button 
+                  onClick={() => handleNavigation('/architect-dashboard#post-design')}
                   className="flex items-center text-sm font-medium transition-colors hover:text-primary"
                 >
                   <Plus className="w-4 h-4 mr-1" />
                   Post Design
-                </Link>
+                </button>
               )}
               
-              <Link 
-                to="/architects" 
+              <button 
+                onClick={() => navigate('/explore-architects')}
                 className="flex items-center text-sm font-medium transition-colors hover:text-primary"
               >
                 <Users className="w-4 h-4 mr-1" />
                 Find Architects
-              </Link>
+              </button>
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -68,14 +82,30 @@ const Navbar: React.FC = () => {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate('/dashboard')}>
+                  <DropdownMenuItem onClick={() => navigate(user.role === 'architect' ? '/architect-dashboard' : '/homeowner-dashboard')}>
                     <Home className="mr-2 h-4 w-4" />
                     <span>Dashboard</span>
+                  </DropdownMenuItem>
+                  {user.role === 'architect' && (
+                    <DropdownMenuItem onClick={() => handleNavigation('/architect-dashboard#post-design')}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      <span>Post Design</span>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem onClick={() => navigate('/explore-architects')}>
+                    <Users className="mr-2 h-4 w-4" />
+                    <span>Find Architects</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/saved')}>
                     <Bookmark className="mr-2 h-4 w-4" />
                     <span>Saved Designs</span>
                   </DropdownMenuItem>
+                  {user.role === 'architect' && (
+                    <DropdownMenuItem onClick={() => handleNavigation('/architect-dashboard#following')}>
+                      <Heart className="mr-2 h-4 w-4" />
+                      <span>Following</span>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => logout()}>
                     <LogOut className="mr-2 h-4 w-4" />
@@ -130,17 +160,17 @@ const Navbar: React.FC = () => {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate('/dashboard')}>
+                  <DropdownMenuItem onClick={() => navigate(user.role === 'architect' ? '/architect-dashboard' : '/homeowner-dashboard')}>
                     <Home className="mr-2 h-4 w-4" />
                     <span>Dashboard</span>
                   </DropdownMenuItem>
                   {user.role === 'architect' && (
-                    <DropdownMenuItem onClick={() => navigate('/post/create')}>
+                    <DropdownMenuItem onClick={() => handleNavigation('/architect-dashboard#post-design')}>
                       <Plus className="mr-2 h-4 w-4" />
                       <span>Post Design</span>
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem onClick={() => navigate('/architects')}>
+                  <DropdownMenuItem onClick={() => navigate('/explore-architects')}>
                     <Users className="mr-2 h-4 w-4" />
                     <span>Find Architects</span>
                   </DropdownMenuItem>
@@ -148,6 +178,12 @@ const Navbar: React.FC = () => {
                     <Bookmark className="mr-2 h-4 w-4" />
                     <span>Saved Designs</span>
                   </DropdownMenuItem>
+                  {user.role === 'architect' && (
+                    <DropdownMenuItem onClick={() => handleNavigation('/architect-dashboard#following')}>
+                      <Heart className="mr-2 h-4 w-4" />
+                      <span>Following</span>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => logout()}>
                     <LogOut className="mr-2 h-4 w-4" />

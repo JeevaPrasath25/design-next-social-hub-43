@@ -1,6 +1,6 @@
 
-import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Upload } from 'lucide-react';
@@ -18,7 +18,11 @@ import FollowingTab from '@/components/dashboard/FollowingTab';
 const ArchitectDashboard: React.FC = () => {
   const { user, updateUser } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+  
+  const postDesignRef = useRef<HTMLDivElement>(null);
+  const followingRef = useRef<HTMLDivElement>(null);
   
   const {
     loading,
@@ -33,6 +37,16 @@ const ArchitectDashboard: React.FC = () => {
     handleToggleFollow,
     handleToggleHireStatus
   } = useArchitectDashboard(user);
+  
+  // Set default tab based on hash
+  const getDefaultTab = () => {
+    if (location.hash === '#following') return 'following';
+    if (location.hash === '#post-design') {
+      setTimeout(() => setPostDialogOpen(true), 300);
+      return 'my-designs';
+    }
+    return 'my-designs';
+  };
 
   useEffect(() => {
     // Redirect if not logged in or not an architect
@@ -45,7 +59,19 @@ const ArchitectDashboard: React.FC = () => {
       navigate('/homeowner-dashboard');
       return;
     }
-  }, [user, navigate]);
+    
+    // Handle hash navigation
+    if (location.hash === '#post-design') {
+      setPostDialogOpen(true);
+      if (postDesignRef.current) {
+        postDesignRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
+    } else if (location.hash === '#following') {
+      if (followingRef.current) {
+        followingRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  }, [user, navigate, location.hash]);
 
   if (!user) return null;
 
@@ -61,7 +87,7 @@ const ArchitectDashboard: React.FC = () => {
           <ProfileCard user={user} updateUser={updateUser} />
           
           {/* Post New Design */}
-          <div className="flex justify-end">
+          <div className="flex justify-end" ref={postDesignRef} id="post-design">
             <PostDesignDialog
               user={user}
               open={postDialogOpen}
@@ -71,12 +97,12 @@ const ArchitectDashboard: React.FC = () => {
           </div>
           
           {/* Tabs for different sections */}
-          <Tabs defaultValue="my-designs" className="w-full">
+          <Tabs defaultValue={getDefaultTab()} className="w-full">
             <TabsList className="mb-4">
               <TabsTrigger value="my-designs">My Designs</TabsTrigger>
               <TabsTrigger value="connect">Connect</TabsTrigger>
               <TabsTrigger value="followers">Followers</TabsTrigger>
-              <TabsTrigger value="following">Following</TabsTrigger>
+              <TabsTrigger value="following" ref={followingRef} id="following">Following</TabsTrigger>
             </TabsList>
             
             {/* My Designs Tab */}

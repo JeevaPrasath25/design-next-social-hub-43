@@ -26,7 +26,11 @@ export const updateProfile = async (userId: string, data: Partial<User>) => {
     
     if (error) {
       console.error('Error updating profile:', error);
-      throw error;
+      throw new Error(error.message || 'Error updating profile');
+    }
+    
+    if (!userData) {
+      throw new Error('No user data returned after update');
     }
     
     return {
@@ -45,28 +49,41 @@ export const updateEnhancedProfile = async (
   { education, experience, skills, contact_email, social_links }: Partial<User>
 ) => {
   try {
+    const updates = {
+      education,
+      experience, 
+      skills,
+      contact_email,
+      social_links,
+      updated_at: new Date().toISOString()
+    };
+    
+    // Filter out undefined values
+    Object.keys(updates).forEach(key => {
+      if (updates[key] === undefined) {
+        delete updates[key];
+      }
+    });
+    
     const { data, error } = await supabase
       .from('users')
-      .update({
-        education,
-        experience, 
-        skills,
-        contact_email,
-        social_links,
-        updated_at: new Date().toISOString()
-      })
+      .update(updates)
       .eq('id', userId)
       .select()
       .single();
     
     if (error) {
       console.error('Error updating enhanced profile:', error);
-      throw error;
+      throw new Error(error.message || 'Error updating enhanced profile');
+    }
+    
+    if (!data) {
+      throw new Error('No user data returned after update');
     }
     
     return {
       ...data,
-      role: data.role as User['role'],
+      role: data.role,
       contact: data.contact_details
     } as User;
   } catch (error) {

@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Post, User, UserRole } from '@/types';
+import { Post, User } from '@/types';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -48,7 +48,7 @@ export const usePostsFeed = (userId?: string, followedOnly = false) => {
           ...post,
           user: post.user ? {
             ...post.user,
-            role: post.user.role as UserRole,
+            role: post.user.role,
             contact: post.user.contact_details
           } : undefined
         })) as Post[];
