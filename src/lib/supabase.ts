@@ -420,12 +420,15 @@ export const hireArchitect = async (homeownerId: string, architectId: string) =>
   }
 };
 
-// Update toggleHireStatus function for architects to toggle hire_me status
+// Update toggleHireStatus function to match the updated Post type
 export const toggleHireStatus = async (postId: string, currentStatus: boolean) => {
   try {
     const { data, error } = await supabase
       .from('posts')
-      .update({ hire_me: !currentStatus })
+      .update({ 
+        hire_me: !currentStatus,
+        updated_at: new Date().toISOString()
+      })
       .eq('id', postId)
       .select()
       .single();
