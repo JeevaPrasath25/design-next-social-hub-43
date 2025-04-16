@@ -6,8 +6,11 @@ import { User } from '@/types';
 import { updateEnhancedProfile } from '@/lib/api';
 import { EnhancedProfileFormValues, enhancedProfileSchema } from '@/components/dashboard/profile/EnhancedProfileForm';
 
-// Define a proper type for the toast function that matches what useToast returns
-interface ToastProps {
+// Import the actual toast types from use-toast to ensure compatibility
+import { type ToastProps as ToastPrimitiveProps } from "@/components/ui/toast";
+
+// Define a proper type for the toast object that matches what useToast returns
+interface ToastContextProps {
   toast: {
     (props: {
       title: string;
@@ -17,7 +20,7 @@ interface ToastProps {
   };
 }
 
-export const useEnhancedProfileForm = (user: User, { toast }: ToastProps, updateUser: (user: User) => void) => {
+export const useEnhancedProfileForm = (user: User, { toast }: ToastContextProps, updateUser: (user: User) => void) => {
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   
