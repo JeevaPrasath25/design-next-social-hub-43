@@ -39,6 +39,8 @@ export const useArchitectRouting = ({
       if (followingTabRef.current) {
         followingTabRef.current.scrollIntoView({ behavior: 'smooth' });
       }
+    } else if (location.hash === '#ai-generator') {
+      navigate('/architect-dashboard/ai-generator');
     }
   }, [user, navigate, location.hash, postDesignRef, followingTabRef, setPostDialogOpen]);
   

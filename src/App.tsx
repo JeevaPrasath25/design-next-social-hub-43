@@ -19,6 +19,8 @@ import PostDetail from "./pages/PostDetail";
 import NotFound from "./pages/NotFound";
 import Architects from "./pages/Architects";
 import ExploreArchitects from "./pages/ExploreArchitects";
+import Profile from "./pages/Profile";
+import AIDesignGenerator from "./pages/AIDesignGenerator";
 
 // Initialize QueryClient
 const queryClient = new QueryClient({
@@ -55,6 +57,25 @@ const App = () => (
               </AuthRequired>
             } />
             
+            {/* AI Design Generator Routes */}
+            <Route path="/architect-dashboard/ai-generator" element={
+              <AuthRequired allowedRoles={['architect']}>
+                <AIDesignGenerator />
+              </AuthRequired>
+            } />
+            <Route path="/homeowner-dashboard/ai-generator" element={
+              <AuthRequired allowedRoles={['homeowner']}>
+                <AIDesignGenerator />
+              </AuthRequired>
+            } />
+            
+            {/* Profile Route */}
+            <Route path="/profile" element={
+              <AuthRequired>
+                <Profile />
+              </AuthRequired>
+            } />
+            
             {/* Protected Routes */}
             <Route path="/hire/:architectId" element={
               <AuthRequired allowedRoles={['homeowner']}>
@@ -78,7 +99,6 @@ const App = () => (
             
             {/* Dashboard redirect */}
             <Route path="/dashboard" element={<Navigate to="/homeowner-dashboard" replace />} />
-            <Route path="/profile" element={<Navigate to="/homeowner-dashboard" replace />} />
             
             {/* 404 Route */}
             <Route path="*" element={<NotFound />} />
