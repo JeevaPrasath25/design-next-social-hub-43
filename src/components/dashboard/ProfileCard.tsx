@@ -13,6 +13,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useToast } from '@/components/ui/use-toast';
 import EnhancedProfileSection from './EnhancedProfileSection';
+import { updateProfile } from '@/lib/api';
 
 const profileFormSchema = z.object({
   username: z.string().min(3, { message: 'Username must be at least 3 characters.' }),
@@ -48,31 +49,17 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ user, updateUser }) => {
       setLoading(true);
       
       // Update user profile in Supabase
-      const updatedUser = {
-        ...user,
+      const updatedUser = await updateProfile(user.id, {
         username: data.username,
-        contact: data.contact || null,
-        bio: data.bio || null,
-      };
-      
-      const response = await fetch('/api/update-profile', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          id: updatedUser.id,
-          username: updatedUser.username,
-          contact_details: updatedUser.contact,
-          bio: updatedUser.bio,
-        }),
+        contact: data.contact,
+        bio: data.bio,
       });
       
-      if (!response.ok) {
-        throw new Error('Failed to update profile');
-      }
-      
-      updateUser(updatedUser);
+      // Update user context
+      updateUser({
+        ...user,
+        ...updatedUser
+      });
       
       toast({
         title: "Profile updated",
