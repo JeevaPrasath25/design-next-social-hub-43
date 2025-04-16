@@ -5,9 +5,18 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { User } from '@/types';
 import { updateEnhancedProfile } from '@/lib/api';
 import { EnhancedProfileFormValues, enhancedProfileSchema } from '@/components/dashboard/profile/EnhancedProfileForm';
-import { UseToastReturn } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
-export const useEnhancedProfileForm = (user: User, toast: UseToastReturn, updateUser: (user: User) => void) => {
+// Define the toast function type based on what's returned from useToast
+interface ToastType {
+  toast: (props: {
+    title: string;
+    description: string;
+    variant?: "default" | "destructive";
+  }) => void;
+}
+
+export const useEnhancedProfileForm = (user: User, toast: ToastType, updateUser: (user: User) => void) => {
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   
@@ -37,7 +46,7 @@ export const useEnhancedProfileForm = (user: User, toast: UseToastReturn, update
         ...updatedUser
       });
       
-      toast({
+      toast.toast({
         title: "Professional details updated",
         description: "Your professional information has been updated successfully",
       });
@@ -45,7 +54,7 @@ export const useEnhancedProfileForm = (user: User, toast: UseToastReturn, update
       setIsEditing(false);
     } catch (error: any) {
       console.error('Error updating enhanced profile:', error);
-      toast({
+      toast.toast({
         title: "Update failed",
         description: error.message || "An error occurred during update",
         variant: "destructive",

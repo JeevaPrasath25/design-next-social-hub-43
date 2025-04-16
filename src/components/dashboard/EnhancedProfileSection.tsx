@@ -3,7 +3,7 @@ import React from 'react';
 import { User } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import EnhancedProfileForm from './profile/EnhancedProfileForm';
 import EnhancedProfileDisplay from './profile/EnhancedProfileDisplay';
 import { useEnhancedProfileForm } from '@/hooks/useEnhancedProfileForm';
@@ -14,7 +14,7 @@ interface EnhancedProfileSectionProps {
 }
 
 const EnhancedProfileSection: React.FC<EnhancedProfileSectionProps> = ({ user, updateUser }) => {
-  const { toast } = useToast();
+  const toast = useToast();
   const { form, loading, isEditing, setIsEditing, handleSubmit } = useEnhancedProfileForm(user, toast, updateUser);
 
   return (
