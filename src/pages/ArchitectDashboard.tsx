@@ -52,35 +52,37 @@ const ArchitectDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <div className={`flex transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
+      <div className="flex min-h-[calc(100vh-4rem)]">
         <DashboardSidebar user={user} />
-        <main className="flex-1 container mx-auto px-4 py-8">
-          <div className="flex flex-col space-y-6">
-            <DashboardHeader
-              user={user}
-              stats={stats}
-              postDialogOpen={postDialogOpen}
-              setPostDialogOpen={setPostDialogOpen}
-              refreshData={refreshData}
-              updateUser={updateUser}
-              postDesignRef={postDesignRef}
-            />
-            
-            <DashboardTabs
-              defaultTab={getDefaultTab()}
-              posts={myPosts}
-              followers={followers}
-              following={following}
-              otherArchitects={otherArchitects}
-              loading={loading}
-              currentUser={user}
-              openPostDialog={() => setPostDialogOpen(true)}
-              onToggleHireStatus={handleToggleHireStatus}
-              onFollowToggle={handleToggleFollow}
-              followingTabRef={followingTabRef}
-            />
-          </div>
-        </main>
+        <div className={`flex-1 transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
+          <main className="container mx-auto px-4 py-8">
+            <div className="flex flex-col space-y-6">
+              <DashboardHeader
+                user={user}
+                stats={stats}
+                postDialogOpen={postDialogOpen}
+                setPostDialogOpen={setPostDialogOpen}
+                refreshData={refreshData}
+                updateUser={updateUser}
+                postDesignRef={postDesignRef}
+              />
+              
+              <DashboardTabs
+                defaultTab={getDefaultTab()}
+                posts={myPosts}
+                followers={followers}
+                following={following}
+                otherArchitects={otherArchitects}
+                loading={loading}
+                currentUser={user}
+                openPostDialog={() => setPostDialogOpen(true)}
+                onToggleHireStatus={handleToggleHireStatus}
+                onFollowToggle={handleToggleFollow}
+                followingTabRef={followingTabRef}
+              />
+            </div>
+          </main>
+        </div>
       </div>
       <Toaster />
     </div>

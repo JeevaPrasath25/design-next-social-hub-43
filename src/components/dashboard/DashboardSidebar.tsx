@@ -29,7 +29,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ user }) => {
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <Sidebar>
+      <Sidebar variant="sidebar" collapsible="icon">
         <SidebarContent>
           <SidebarGroup>
             <SidebarGroupLabel>Dashboard</SidebarGroupLabel>
