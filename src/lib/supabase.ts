@@ -449,9 +449,7 @@ export const toggleHireStatus = async (postId: string, currentStatus: boolean) =
       .from('posts')
       .update({ 
         hire_me: !currentStatus,
-        updated_at: new Date().toISOString(),
-        design_type: null,
-        tags: null
+        updated_at: new Date().toISOString() 
       })
       .eq('id', postId)
       .select()

@@ -1,3 +1,4 @@
+
 export type UserRole = 'architect' | 'homeowner';
 
 export interface User {
@@ -27,9 +28,9 @@ export interface Post {
   likes_count?: number;
   is_liked?: boolean;
   is_saved?: boolean;
-  design_type?: string; // Added field
-  tags?: string[]; // Added field
-  hire_me?: boolean; // Added field
+  design_type?: string; // Added field for categorization
+  tags?: string[]; // Added field for searchability
+  hire_me?: boolean; // Flag indicating if architect is available for hire for this design
 }
 
 export interface ProfileStats {
