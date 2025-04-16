@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -22,7 +21,7 @@ const ArchitectDashboard: React.FC = () => {
   const { toast } = useToast();
   
   const postDesignRef = useRef<HTMLDivElement>(null);
-  const followingRef = useRef<HTMLDivElement>(null);
+  const followingTabRef = useRef<HTMLButtonElement>(null);
   
   const {
     loading,
@@ -38,7 +37,6 @@ const ArchitectDashboard: React.FC = () => {
     handleToggleHireStatus
   } = useArchitectDashboard(user);
   
-  // Set default tab based on hash
   const getDefaultTab = () => {
     if (location.hash === '#following') return 'following';
     if (location.hash === '#post-design') {
@@ -49,7 +47,6 @@ const ArchitectDashboard: React.FC = () => {
   };
 
   useEffect(() => {
-    // Redirect if not logged in or not an architect
     if (!user) {
       navigate('/login');
       return;
@@ -60,15 +57,14 @@ const ArchitectDashboard: React.FC = () => {
       return;
     }
     
-    // Handle hash navigation
     if (location.hash === '#post-design') {
       setPostDialogOpen(true);
       if (postDesignRef.current) {
         postDesignRef.current.scrollIntoView({ behavior: 'smooth' });
       }
     } else if (location.hash === '#following') {
-      if (followingRef.current) {
-        followingRef.current.scrollIntoView({ behavior: 'smooth' });
+      if (followingTabRef.current) {
+        followingTabRef.current.scrollIntoView({ behavior: 'smooth' });
       }
     }
   }, [user, navigate, location.hash]);
@@ -80,13 +76,10 @@ const ArchitectDashboard: React.FC = () => {
       <Navbar />
       <main className="container px-4 py-8">
         <div className="flex flex-col space-y-6">
-          {/* Profile Summary */}
           <StatsCards stats={stats} />
           
-          {/* Profile Details */}
           <ProfileCard user={user} updateUser={updateUser} />
           
-          {/* Post New Design */}
           <div className="flex justify-end" ref={postDesignRef} id="post-design">
             <PostDesignDialog
               user={user}
@@ -96,16 +89,18 @@ const ArchitectDashboard: React.FC = () => {
             />
           </div>
           
-          {/* Tabs for different sections */}
           <Tabs defaultValue={getDefaultTab()} className="w-full">
             <TabsList className="mb-4">
               <TabsTrigger value="my-designs">My Designs</TabsTrigger>
               <TabsTrigger value="connect">Connect</TabsTrigger>
               <TabsTrigger value="followers">Followers</TabsTrigger>
-              <TabsTrigger value="following" ref={followingRef} id="following">Following</TabsTrigger>
+              <TabsTrigger 
+                value="following" 
+                ref={followingTabRef}
+                id="following"
+              >Following</TabsTrigger>
             </TabsList>
             
-            {/* My Designs Tab */}
             <TabsContent value="my-designs">
               <MyDesignsTab 
                 posts={myPosts}
@@ -115,7 +110,6 @@ const ArchitectDashboard: React.FC = () => {
               />
             </TabsContent>
             
-            {/* Connect Tab */}
             <TabsContent value="connect">
               <ConnectTab 
                 architects={otherArchitects}
@@ -125,7 +119,6 @@ const ArchitectDashboard: React.FC = () => {
               />
             </TabsContent>
             
-            {/* Followers Tab */}
             <TabsContent value="followers">
               <FollowersTab 
                 followers={followers}
@@ -133,7 +126,6 @@ const ArchitectDashboard: React.FC = () => {
               />
             </TabsContent>
             
-            {/* Following Tab */}
             <TabsContent value="following">
               <FollowingTab 
                 following={following}
