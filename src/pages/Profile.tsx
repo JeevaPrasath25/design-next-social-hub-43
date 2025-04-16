@@ -9,7 +9,7 @@ import ProfileSummaryCard from '@/components/profile/ProfileSummaryCard';
 import ProfileSettingsCard from '@/components/profile/ProfileSettingsCard';
 
 const Profile: React.FC = () => {
-  const { user, updateUser } = useAuth();
+  const { user } = useAuth();
 
   if (!user) {
     return (
@@ -46,7 +46,7 @@ const Profile: React.FC = () => {
               
               {/* Profile Settings Card */}
               <div className="w-full md:w-2/3">
-                <ProfileSettingsCard user={user} updateUser={updateUser} />
+                <ProfileSettingsCard user={user} />
               </div>
             </div>
           </div>
