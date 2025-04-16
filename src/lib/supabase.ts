@@ -420,6 +420,28 @@ export const hireArchitect = async (homeownerId: string, architectId: string) =>
   }
 };
 
+// New function to get user by ID
+export const getUserById = async (userId: string): Promise<User | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    
+    if (error) throw error;
+    
+    return {
+      ...data,
+      role: data.role as UserRole,
+      contact: data.contact_details
+    } as User;
+  } catch (error) {
+    console.error('Error getting user by ID:', error);
+    return null;
+  }
+};
+
 // Update toggleHireStatus function to match the updated Post type
 export const toggleHireStatus = async (postId: string, currentStatus: boolean) => {
   try {
@@ -427,7 +449,9 @@ export const toggleHireStatus = async (postId: string, currentStatus: boolean) =
       .from('posts')
       .update({ 
         hire_me: !currentStatus,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        design_type: null,
+        tags: null
       })
       .eq('id', postId)
       .select()

@@ -64,6 +64,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const user = await getCurrentUser();
             setUser(user);
             setLoading(false);
+            
+            // Redirect based on role
+            if (user) {
+              if (user.role === 'architect') {
+                navigate('/architect-dashboard');
+              } else if (user.role === 'homeowner') {
+                navigate('/homeowner-dashboard');
+              }
+            }
           }, 0);
         } else if (event === 'SIGNED_OUT') {
           setUser(null);
@@ -113,7 +122,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         duration: 3000,
       });
       
-      navigate('/dashboard');
+      // Auth state listener will handle redirects based on role
     } catch (error: any) {
       toast({
         title: "Login failed",
