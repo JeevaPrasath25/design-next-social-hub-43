@@ -1,74 +1,72 @@
 
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import Logo from '@/components/ui/logo';
-import { ArrowRight } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { Button } from '@/components/ui/button';
+import Navbar from '@/components/Navbar';
 
-const Index = () => {
-  const navigate = useNavigate();
+const Index: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Redirect if already logged in
+    if (user) {
+      if (user.role === 'architect') {
+        navigate('/architect-dashboard');
+      } else if (user.role === 'homeowner') {
+        navigate('/homeowner-dashboard');
+      }
+    }
+  }, [user, navigate]);
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="border-b bg-white">
-        <div className="container flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
-          <Logo size="medium" />
-          <div className="flex items-center space-x-4">
-            {user ? (
-              <Button onClick={() => navigate('/dashboard')}>
-                Dashboard
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      <div className="container mx-auto px-4 py-12 flex flex-col items-center text-center">
+        <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mt-8">
+          Welcome to <span className="text-primary">Design</span>Next
+        </h1>
+        <p className="mt-4 text-xl text-gray-600 max-w-2xl">
+          Connect with architects, discover amazing designs, and bring your dream home to life.
+        </p>
+        
+        <div className="mt-8 flex flex-col sm:flex-row gap-4">
+          {!user ? (
+            <>
+              <Button size="lg" asChild>
+                <Link to="/register">Get Started</Link>
               </Button>
-            ) : (
-              <>
-                <Button variant="ghost" onClick={() => navigate('/login')}>
-                  Log in
-                </Button>
-                <Button onClick={() => navigate('/register')}>
-                  Sign up
-                </Button>
-              </>
-            )}
+              <Button size="lg" variant="outline" asChild>
+                <Link to="/login">Log In</Link>
+              </Button>
+            </>
+          ) : (
+            <Button size="lg" asChild>
+              <Link to={user.role === 'architect' ? '/architect-dashboard' : '/homeowner-dashboard'}>
+                Go to Dashboard
+              </Link>
+            </Button>
+          )}
+        </div>
+        
+        <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl">
+          <div className="p-6 bg-white rounded-lg shadow-sm border">
+            <h3 className="text-xl font-semibold mb-2">For Homeowners</h3>
+            <p className="text-gray-600">Discover unique designs and connect with professional architects to bring your vision to life.</p>
+          </div>
+          
+          <div className="p-6 bg-white rounded-lg shadow-sm border">
+            <h3 className="text-xl font-semibold mb-2">For Architects</h3>
+            <p className="text-gray-600">Showcase your portfolio, build your network, and connect with potential clients.</p>
+          </div>
+          
+          <div className="p-6 bg-white rounded-lg shadow-sm border">
+            <h3 className="text-xl font-semibold mb-2">Design Community</h3>
+            <p className="text-gray-600">Join a community of design enthusiasts, share ideas, and stay inspired.</p>
           </div>
         </div>
-      </header>
-
-      <main className="flex-1 grid place-items-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto">
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
-            <span className="block">Discover and connect with</span>
-            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-brandPurple to-brandPurpleDark">
-              architectural designs
-            </span>
-          </h1>
-          <p className="mt-6 text-lg text-gray-600 max-w-md mx-auto">
-            Design Next connects architects with homeowners. Showcase your designs or find the perfect architect for your next project.
-          </p>
-          <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-            {user ? (
-              <Button size="lg" onClick={() => navigate('/dashboard')} className="gap-2">
-                Go to Dashboard <ArrowRight size={16} />
-              </Button>
-            ) : (
-              <>
-                <Button size="lg" onClick={() => navigate('/register')} className="gap-2">
-                  Get Started <ArrowRight size={16} />
-                </Button>
-                <Button size="lg" variant="outline" onClick={() => navigate('/login')}>
-                  Log in
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-      </main>
-
-      <footer className="border-t py-6 text-center text-muted-foreground text-sm">
-        <div className="container px-4 sm:px-6 lg:px-8">
-          Design Next - A platform for architectural design
-        </div>
-      </footer>
+      </div>
     </div>
   );
 };

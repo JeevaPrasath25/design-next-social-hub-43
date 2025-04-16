@@ -1,14 +1,14 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
+import AuthRequired from "@/components/AuthRequired";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import Dashboard from "./pages/Dashboard";
-import Profile from "./pages/Profile";
 import ArchitectDashboard from "./pages/ArchitectDashboard";
 import HomeownerDashboard from "./pages/HomeownerDashboard";
 import HireArchitect from "./pages/HireArchitect";
@@ -17,7 +17,6 @@ import CreatePost from "./pages/CreatePost";
 import ArchitectDetail from "./pages/ArchitectDetail";
 import PostDetail from "./pages/PostDetail";
 import NotFound from "./pages/NotFound";
-import { useAuth } from "./context/AuthContext";
 
 // Initialize QueryClient
 const queryClient = new QueryClient({
@@ -29,40 +28,6 @@ const queryClient = new QueryClient({
   },
 });
 
-// A wrapper component to handle auth-based redirects
-const RequireAuth = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
-  
-  if (loading) return <div>Loading...</div>;
-  
-  if (!user) {
-    return <Navigate to="/login" />;
-  }
-  
-  return <>{children}</>;
-};
-
-// Role-based redirect component
-const RoleRedirect = () => {
-  const { user, loading } = useAuth();
-  
-  if (loading) return <div>Loading...</div>;
-  
-  if (!user) {
-    return <Navigate to="/login" />;
-  }
-  
-  if (user.role === 'architect') {
-    return <Navigate to="/architect-dashboard" />;
-  }
-  
-  if (user.role === 'homeowner') {
-    return <Navigate to="/homeowner-dashboard" />;
-  }
-  
-  return <Navigate to="/login" />;
-};
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <BrowserRouter>
@@ -71,34 +36,47 @@ const App = () => (
           <Toaster />
           <Sonner />
           <Routes>
+            {/* Public Routes */}
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/dashboard" element={<RoleRedirect />} />
-            <Route path="/profile" element={<RoleRedirect />} />
             
-            {/* New Role-based Dashboard Routes */}
+            {/* Role-Based Dashboard Routes */}
             <Route path="/architect-dashboard" element={
-              <RequireAuth>
+              <AuthRequired allowedRoles={['architect']}>
                 <ArchitectDashboard />
-              </RequireAuth>
+              </AuthRequired>
             } />
             <Route path="/homeowner-dashboard" element={
-              <RequireAuth>
+              <AuthRequired allowedRoles={['homeowner']}>
                 <HomeownerDashboard />
-              </RequireAuth>
-            } />
-            <Route path="/hire/:architectId" element={
-              <RequireAuth>
-                <HireArchitect />
-              </RequireAuth>
+              </AuthRequired>
             } />
             
-            {/* Existing Routes */}
-            <Route path="/saved" element={<SavedPosts />} />
-            <Route path="/post/create" element={<CreatePost />} />
+            {/* Protected Routes */}
+            <Route path="/hire/:architectId" element={
+              <AuthRequired allowedRoles={['homeowner']}>
+                <HireArchitect />
+              </AuthRequired>
+            } />
+            <Route path="/saved" element={
+              <AuthRequired>
+                <SavedPosts />
+              </AuthRequired>
+            } />
+            <Route path="/post/create" element={
+              <AuthRequired allowedRoles={['architect']}>
+                <CreatePost />
+              </AuthRequired>
+            } />
             <Route path="/post/:postId" element={<PostDetail />} />
             <Route path="/architect/:architectId" element={<ArchitectDetail />} />
+            
+            {/* Dashboard redirect */}
+            <Route path="/dashboard" element={<Navigate to="/homeowner-dashboard" replace />} />
+            <Route path="/profile" element={<Navigate to="/homeowner-dashboard" replace />} />
+            
+            {/* 404 Route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </TooltipProvider>

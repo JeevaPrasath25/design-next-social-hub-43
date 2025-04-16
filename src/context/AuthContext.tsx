@@ -34,16 +34,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .from('users')
         .select('*')
         .eq('id', authUser.id)
-        .single();
+        .maybeSingle();
       
-      if (error) {
+      if (error && error.code !== 'PGRST116') {
         console.error('Error getting user profile:', error);
         return null;
       }
       
+      if (!data) {
+        // Create a default user profile if it doesn't exist
+        const defaultUser = {
+          id: authUser.id,
+          email: authUser.email,
+          username: authUser.user_metadata?.username || authUser.email?.split('@')[0] || 'User',
+          role: (authUser.user_metadata?.role || 'homeowner') as UserRole,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          avatar_url: null,
+          bio: null,
+          contact_details: null
+        };
+        
+        const { data: newUser, error: insertError } = await supabase
+          .from('users')
+          .insert(defaultUser)
+          .select()
+          .single();
+          
+        if (insertError) {
+          console.error('Error creating user profile:', insertError);
+          return defaultUser;
+        }
+        
+        return {
+          ...newUser,
+          role: newUser.role as UserRole,
+          contact: newUser.contact_details
+        } as User;
+      }
+      
       return {
         ...data,
-        role: data.role as UserRole, // Cast the role to UserRole
+        role: data.role as UserRole, 
         contact: data.contact_details
       } as User;
     } catch (error) {
@@ -89,6 +121,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (session) {
           const user = await getCurrentUser();
           setUser(user);
+          
+          // Redirect based on role for initial load
+          if (user) {
+            if (user.role === 'architect') {
+              navigate('/architect-dashboard');
+            } else if (user.role === 'homeowner') {
+              navigate('/homeowner-dashboard');
+            }
+          }
         }
       } catch (error) {
         console.error('Error checking user:', error);
@@ -155,6 +196,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) throw error;
       
       // The users table entry will be created by the database trigger
+      // If not, it will be handled in getCurrentUser
       
       toast({
         title: "Registration successful",
