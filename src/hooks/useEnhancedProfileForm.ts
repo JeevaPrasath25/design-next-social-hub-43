@@ -6,16 +6,18 @@ import { User } from '@/types';
 import { updateEnhancedProfile } from '@/lib/api';
 import { EnhancedProfileFormValues, enhancedProfileSchema } from '@/components/dashboard/profile/EnhancedProfileForm';
 
-// Define toast interface to avoid type errors
+// Define a proper type for the toast function that matches what useToast returns
 interface ToastProps {
-  toast: (props: {
-    title: string;
-    description: string;
-    variant?: "default" | "destructive";
-  }) => void;
+  toast: {
+    (props: {
+      title: string;
+      description: string;
+      variant?: "default" | "destructive";
+    }): { id: string; dismiss: () => void; update: (props: any) => void; };
+  };
 }
 
-export const useEnhancedProfileForm = (user: User, toast: ToastProps, updateUser: (user: User) => void) => {
+export const useEnhancedProfileForm = (user: User, { toast }: ToastProps, updateUser: (user: User) => void) => {
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   
@@ -43,7 +45,7 @@ export const useEnhancedProfileForm = (user: User, toast: ToastProps, updateUser
         ...updatedUser
       });
       
-      toast.toast({
+      toast({
         title: "Professional details updated",
         description: "Your professional information has been updated successfully",
       });
@@ -51,7 +53,7 @@ export const useEnhancedProfileForm = (user: User, toast: ToastProps, updateUser
       setIsEditing(false);
     } catch (error: any) {
       console.error('Error updating enhanced profile:', error);
-      toast.toast({
+      toast({
         title: "Update failed",
         description: error.message || "An error occurred during update",
         variant: "destructive",
