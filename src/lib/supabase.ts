@@ -207,9 +207,9 @@ export const createPost = async (postData: Partial<Post>, imageFile: File) => {
         description: postData.description || null,
         image_url: imageUrl,
         user_id: postData.user_id,
-        design_type: postData.design_type || 'Residential',
-        tags: postData.tags || [],
-        hire_me: postData.hire_me || false
+        design_type: postData.design_type,
+        tags: postData.tags,
+        hire_me: postData.hire_me
       })
       .select()
       .single();

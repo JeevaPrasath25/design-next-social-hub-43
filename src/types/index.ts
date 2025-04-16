@@ -1,4 +1,3 @@
-
 export type UserRole = 'architect' | 'homeowner';
 
 export interface User {
@@ -12,6 +11,8 @@ export interface User {
   bio?: string;
   contact_details?: string;
   updated_at?: string;
+  is_following?: boolean; // Added for UI state
+  is_hired?: boolean; // Added for UI state
 }
 
 export interface Post {
@@ -26,9 +27,9 @@ export interface Post {
   likes_count?: number;
   is_liked?: boolean;
   is_saved?: boolean;
-  design_type?: string;
-  tags?: string[];
-  hire_me?: boolean;
+  design_type?: string; // Added field
+  tags?: string[]; // Added field
+  hire_me?: boolean; // Added field
 }
 
 export interface ProfileStats {
