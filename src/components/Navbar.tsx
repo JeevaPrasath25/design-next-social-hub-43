@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Home, User, LogOut, Plus, Heart, Bookmark, Settings } from 'lucide-react';
+import { Home, User, LogOut, Plus, Heart, Bookmark, Settings, Users } from 'lucide-react';
 
 const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
@@ -44,6 +44,14 @@ const Navbar: React.FC = () => {
                 </Link>
               )}
               
+              <Link 
+                to="/architects" 
+                className="flex items-center text-sm font-medium transition-colors hover:text-primary"
+              >
+                <Users className="w-4 h-4 mr-1" />
+                Find Architects
+              </Link>
+              
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="rounded-full h-8 w-8 p-0">
@@ -63,10 +71,6 @@ const Navbar: React.FC = () => {
                   <DropdownMenuItem onClick={() => navigate('/dashboard')}>
                     <Home className="mr-2 h-4 w-4" />
                     <span>Dashboard</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/profile')}>
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/saved')}>
                     <Bookmark className="mr-2 h-4 w-4" />
@@ -130,16 +134,16 @@ const Navbar: React.FC = () => {
                     <Home className="mr-2 h-4 w-4" />
                     <span>Dashboard</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/profile')}>
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
-                  </DropdownMenuItem>
                   {user.role === 'architect' && (
                     <DropdownMenuItem onClick={() => navigate('/post/create')}>
                       <Plus className="mr-2 h-4 w-4" />
                       <span>Post Design</span>
                     </DropdownMenuItem>
                   )}
+                  <DropdownMenuItem onClick={() => navigate('/architects')}>
+                    <Users className="mr-2 h-4 w-4" />
+                    <span>Find Architects</span>
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/saved')}>
                     <Bookmark className="mr-2 h-4 w-4" />
                     <span>Saved Designs</span>

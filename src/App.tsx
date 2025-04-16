@@ -17,6 +17,7 @@ import CreatePost from "./pages/CreatePost";
 import ArchitectDetail from "./pages/ArchitectDetail";
 import PostDetail from "./pages/PostDetail";
 import NotFound from "./pages/NotFound";
+import Architects from "./pages/Architects";
 
 // Initialize QueryClient
 const queryClient = new QueryClient({
@@ -71,6 +72,7 @@ const App = () => (
             } />
             <Route path="/post/:postId" element={<PostDetail />} />
             <Route path="/architect/:architectId" element={<ArchitectDetail />} />
+            <Route path="/architects" element={<Architects />} />
             
             {/* Dashboard redirect */}
             <Route path="/dashboard" element={<Navigate to="/homeowner-dashboard" replace />} />

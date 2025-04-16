@@ -2,19 +2,18 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Upload, Heart, BookmarkIcon, Users, Plus, Briefcase } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Upload, Briefcase, UserPlus, UserCheck, Users } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import DesignCard from '@/components/DesignCard';
 import PostForm from '@/components/PostForm';
 import { useToast } from '@/components/ui/use-toast';
-import { Post, ProfileStats } from '@/types';
-import { getPosts, getProfileStats, getFollowers, getFollowing, toggleLike, toggleFollow, toggleHireStatus } from '@/lib/supabase';
+import { Post, ProfileStats, User } from '@/types';
+import { getPosts, getProfileStats, getFollowers, getFollowing, toggleLike, toggleFollow, toggleHireStatus, getArchitects } from '@/lib/supabase';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -29,6 +28,8 @@ import {
 } from '@/components/ui/form';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import ArchitectCard from '@/components/ArchitectCard';
 
 const profileFormSchema = z.object({
   username: z.string().min(3, { message: 'Username must be at least 3 characters.' }),
@@ -44,7 +45,6 @@ const ArchitectDashboard: React.FC = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [myPosts, setMyPosts] = useState<Post[]>([]);
-  const [otherPosts, setOtherPosts] = useState<Post[]>([]);
   const [followers, setFollowers] = useState<any[]>([]);
   const [following, setFollowing] = useState<any[]>([]);
   const [stats, setStats] = useState<ProfileStats>({
@@ -54,6 +54,7 @@ const ArchitectDashboard: React.FC = () => {
   });
   const [isEditing, setIsEditing] = useState(false);
   const [postDialogOpen, setPostDialogOpen] = useState(false);
+  const [otherArchitects, setOtherArchitects] = useState<User[]>([]);
   
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -81,9 +82,8 @@ const ArchitectDashboard: React.FC = () => {
         setLoading(true);
         
         // Get posts
-        const fetchedPosts = await getPosts();
-        setMyPosts(fetchedPosts.filter(p => p.user_id === user.id));
-        setOtherPosts(fetchedPosts.filter(p => p.user_id !== user.id));
+        const fetchedPosts = await getPosts(user.id);
+        setMyPosts(fetchedPosts);
         
         // Get profile stats
         const profileStats = await getProfileStats(user.id);
@@ -95,6 +95,10 @@ const ArchitectDashboard: React.FC = () => {
         
         const followingData = await getFollowing(user.id);
         setFollowing(followingData.map(f => f.following));
+        
+        // Get other architects for the "Connect" tab
+        const architectsData = await getArchitects(user.id);
+        setOtherArchitects(architectsData.filter(arch => arch.id !== user.id));
       } catch (error) {
         console.error('Error fetching architect dashboard data:', error);
         toast({
@@ -114,12 +118,18 @@ const ArchitectDashboard: React.FC = () => {
     if (!user) return;
     
     try {
-      const fetchedPosts = await getPosts();
-      setMyPosts(fetchedPosts.filter(p => p.user_id === user.id));
-      setOtherPosts(fetchedPosts.filter(p => p.user_id !== user.id));
+      const fetchedPosts = await getPosts(user.id);
+      setMyPosts(fetchedPosts);
       
       const profileStats = await getProfileStats(user.id);
       setStats(profileStats);
+      
+      // Refresh followers and following
+      const followersData = await getFollowers(user.id);
+      setFollowers(followersData.map(f => f.follower));
+      
+      const followingData = await getFollowing(user.id);
+      setFollowing(followingData.map(f => f.following));
     } catch (error) {
       console.error('Error refreshing data:', error);
     }
@@ -135,18 +145,26 @@ const ArchitectDashboard: React.FC = () => {
       const updatedUser = {
         ...user,
         username: data.username,
-        contact: data.contact,
-        bio: data.bio,
+        contact: data.contact || null,
+        bio: data.bio || null,
       };
       
-      // Call updateUserProfile from supabase.ts
-      await fetch('/api/update-profile', {
+      const response = await fetch('/api/update-profile', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(updatedUser),
+        body: JSON.stringify({
+          id: updatedUser.id,
+          username: updatedUser.username,
+          contact_details: updatedUser.contact,
+          bio: updatedUser.bio,
+        }),
       });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update profile');
+      }
       
       updateUser(updatedUser);
       
@@ -167,6 +185,47 @@ const ArchitectDashboard: React.FC = () => {
     }
   };
 
+  const handleToggleFollow = async (architectId: string, isFollowing: boolean) => {
+    if (!user) return;
+    
+    try {
+      await toggleFollow(user.id, architectId, isFollowing);
+      
+      // Update architects state
+      setOtherArchitects(prev => prev.map(architect => {
+        if (architect.id === architectId) {
+          return {
+            ...architect,
+            is_following: !isFollowing
+          };
+        }
+        return architect;
+      }));
+      
+      // Refresh following list
+      const followingData = await getFollowing(user.id);
+      setFollowing(followingData.map(f => f.following));
+      
+      // Update stats
+      const profileStats = await getProfileStats(user.id);
+      setStats(profileStats);
+      
+      toast({
+        title: isFollowing ? "Unfollowed" : "Following",
+        description: isFollowing 
+          ? "You are no longer following this architect" 
+          : "You are now following this architect",
+      });
+    } catch (error) {
+      console.error('Error toggling follow:', error);
+      toast({
+        title: "Error",
+        description: "Could not update follow status",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleLike = async (post: Post) => {
     if (!user) return;
     
@@ -174,19 +233,15 @@ const ArchitectDashboard: React.FC = () => {
       await toggleLike(user.id, post.id, !!post.is_liked);
       
       // Update posts state
-      const updatePost = (posts: Post[]) => 
-        posts.map(p => {
-          if (p.id === post.id) {
-            const newLikesCount = post.is_liked 
-              ? (post.likes_count || 1) - 1 
-              : (post.likes_count || 0) + 1;
-            return { ...p, is_liked: !post.is_liked, likes_count: newLikesCount };
-          }
-          return p;
-        });
-      
-      setMyPosts(updatePost(myPosts));
-      setOtherPosts(updatePost(otherPosts));
+      setMyPosts(prev => prev.map(p => {
+        if (p.id === post.id) {
+          const newLikesCount = post.is_liked 
+            ? (post.likes_count || 1) - 1 
+            : (post.likes_count || 0) + 1;
+          return { ...p, is_liked: !post.is_liked, likes_count: newLikesCount };
+        }
+        return p;
+      }));
       
     } catch (error) {
       console.error('Error toggling like:', error);
@@ -309,8 +364,9 @@ const ArchitectDashboard: React.FC = () => {
                           <FormControl>
                             <Textarea 
                               placeholder="Add your contact details (email, phone, etc.)"
-                              className="min-h-24"
+                              className="min-h-24 resize-none"
                               {...field}
+                              value={field.value || ''}
                             />
                           </FormControl>
                           <FormDescription>
@@ -330,8 +386,9 @@ const ArchitectDashboard: React.FC = () => {
                           <FormControl>
                             <Textarea 
                               placeholder="Tell us about yourself, your experience, and your expertise..."
-                              className="min-h-32"
+                              className="min-h-32 resize-none"
                               {...field}
+                              value={field.value || ''}
                             />
                           </FormControl>
                           <FormDescription>
@@ -401,12 +458,9 @@ const ArchitectDashboard: React.FC = () => {
                   <Upload className="h-4 w-4" /> Upload New Design
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[600px]">
+              <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Upload a New Design</DialogTitle>
-                  <DialogDescription>
-                    Share your architectural work with clients and fellow architects.
-                  </DialogDescription>
                 </DialogHeader>
                 <PostForm 
                   user={user} 
@@ -427,7 +481,7 @@ const ArchitectDashboard: React.FC = () => {
           <Tabs defaultValue="my-designs" className="w-full">
             <TabsList className="mb-4">
               <TabsTrigger value="my-designs">My Designs</TabsTrigger>
-              <TabsTrigger value="discover">Discover</TabsTrigger>
+              <TabsTrigger value="connect">Connect</TabsTrigger>
               <TabsTrigger value="followers">Followers</TabsTrigger>
               <TabsTrigger value="following">Following</TabsTrigger>
             </TabsList>
@@ -440,7 +494,7 @@ const ArchitectDashboard: React.FC = () => {
                 <div className="text-center py-12">
                   <p className="text-muted-foreground mb-4">You haven't posted any designs yet.</p>
                   <Button onClick={() => setPostDialogOpen(true)}>
-                    <Plus className="h-4 w-4 mr-2" /> Upload Your First Design
+                    <Upload className="h-4 w-4 mr-2" /> Upload Your First Design
                   </Button>
                 </div>
               ) : (
@@ -457,9 +511,9 @@ const ArchitectDashboard: React.FC = () => {
                       <CardHeader>
                         <CardTitle>{post.title}</CardTitle>
                         {post.description && (
-                          <CardDescription className="line-clamp-2">
+                          <p className="line-clamp-2 text-sm text-muted-foreground">
                             {post.description}
-                          </CardDescription>
+                          </p>
                         )}
                       </CardHeader>
                       <CardFooter className="flex justify-between">
@@ -485,22 +539,22 @@ const ArchitectDashboard: React.FC = () => {
               )}
             </TabsContent>
             
-            {/* Discover Tab */}
-            <TabsContent value="discover">
+            {/* Connect Tab */}
+            <TabsContent value="connect">
               {loading ? (
-                <div className="text-center py-12">Loading designs...</div>
-              ) : otherPosts.length === 0 ? (
+                <div className="text-center py-12">Loading architects...</div>
+              ) : otherArchitects.length === 0 ? (
                 <div className="text-center py-12">
-                  <p className="text-muted-foreground">No designs from other architects yet.</p>
+                  <p className="text-muted-foreground">No other architects found.</p>
                 </div>
               ) : (
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  {otherPosts.map(post => (
-                    <DesignCard 
-                      key={post.id} 
-                      post={post} 
+                  {otherArchitects.map(architect => (
+                    <ArchitectCard
+                      key={architect.id}
+                      architect={architect}
                       currentUser={user}
-                      onLike={handleLike}
+                      onFollowToggle={handleToggleFollow}
                     />
                   ))}
                 </div>
@@ -529,9 +583,9 @@ const ArchitectDashboard: React.FC = () => {
                           </Avatar>
                           <div>
                             <CardTitle className="text-lg">{follower.username}</CardTitle>
-                            <CardDescription>
+                            <p className="text-sm text-muted-foreground">
                               {follower.role.charAt(0).toUpperCase() + follower.role.slice(1)}
-                            </CardDescription>
+                            </p>
                           </div>
                         </div>
                       </CardHeader>
@@ -573,20 +627,29 @@ const ArchitectDashboard: React.FC = () => {
                           </Avatar>
                           <div>
                             <CardTitle className="text-lg">{follow.username}</CardTitle>
-                            <CardDescription>
+                            <p className="text-sm text-muted-foreground">
                               {follow.role.charAt(0).toUpperCase() + follow.role.slice(1)}
-                            </CardDescription>
+                            </p>
                           </div>
                         </div>
                       </CardHeader>
-                      <CardFooter>
+                      <CardFooter className="flex gap-2">
                         <Button 
                           variant="outline"
                           size="sm"
                           onClick={() => navigate(`/architect/${follow.id}`)}
-                          className="w-full"
+                          className="flex-1"
                         >
                           View Profile
+                        </Button>
+                        <Button 
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleToggleFollow(follow.id, true)}
+                          className="flex-1"
+                        >
+                          <UserCheck className="h-4 w-4 mr-2" />
+                          Unfollow
                         </Button>
                       </CardFooter>
                     </Card>
