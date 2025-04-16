@@ -26,6 +26,9 @@ export interface Post {
   likes_count?: number;
   is_liked?: boolean;
   is_saved?: boolean;
+  design_type?: string;
+  tags?: string[];
+  hire_me?: boolean;
 }
 
 export interface ProfileStats {

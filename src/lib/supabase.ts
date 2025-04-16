@@ -194,7 +194,7 @@ export const createPost = async (postData: Partial<Post>, imageFile: File) => {
     
     const imageUrl = urlData.publicUrl;
     
-    // 3. Create post in the database
+    // 3. Create post in the database with additional fields
     // Ensure required fields are present
     if (!postData.title || !postData.user_id) {
       throw new Error("Title and user_id are required for creating a post");
@@ -206,7 +206,10 @@ export const createPost = async (postData: Partial<Post>, imageFile: File) => {
         title: postData.title,
         description: postData.description || null,
         image_url: imageUrl,
-        user_id: postData.user_id
+        user_id: postData.user_id,
+        design_type: postData.design_type || 'Residential',
+        tags: postData.tags || [],
+        hire_me: postData.hire_me || false
       })
       .select()
       .single();
@@ -413,6 +416,25 @@ export const hireArchitect = async (homeownerId: string, architectId: string) =>
     return { success: true };
   } catch (error) {
     console.error('Error hiring architect:', error);
+    throw error;
+  }
+};
+
+// Update toggleHireStatus function for architects to toggle hire_me status
+export const toggleHireStatus = async (postId: string, currentStatus: boolean) => {
+  try {
+    const { data, error } = await supabase
+      .from('posts')
+      .update({ hire_me: !currentStatus })
+      .eq('id', postId)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    return data;
+  } catch (error) {
+    console.error('Error toggling hire status:', error);
     throw error;
   }
 };

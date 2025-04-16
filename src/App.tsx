@@ -16,7 +16,15 @@ import ArchitectDetail from "./pages/ArchitectDetail";
 import PostDetail from "./pages/PostDetail";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+// Initialize QueryClient
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

@@ -1,52 +1,72 @@
 
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import Navbar from '@/components/Navbar';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, Post, ProfileStats } from '@/types';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { User, Post, ProfileStats } from '@/types';
+import { getCurrentUser, getPosts, getProfileStats, toggleFollow, hireArchitect } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
-import { getPosts, toggleFollow, hireArchitect, getProfileStats } from '@/lib/supabase';
+import Navbar from '@/components/Navbar';
 import DesignCard from '@/components/DesignCard';
-import { Users, Mail, AlertCircle } from 'lucide-react';
+import { UserCheck, UserPlus, Users, BriefcaseIcon, Mail } from 'lucide-react';
 
 const ArchitectDetail: React.FC = () => {
   const { architectId } = useParams<{ architectId: string }>();
   const { user } = useAuth();
-  const { toast } = useToast();
   const navigate = useNavigate();
-  
+  const { toast } = useToast();
   const [architect, setArchitect] = useState<User | null>(null);
   const [stats, setStats] = useState<ProfileStats | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchArchitectData = async () => {
+    const fetchData = async () => {
       if (!architectId) return;
 
       try {
         setLoading(true);
         
-        // Fetch architect's posts
-        const fetchedPosts = await getPosts(architectId);
-        setPosts(fetchedPosts);
+        // Get architect data
+        const architectData = await getCurrentUser();
         
-        // Get architect profile from their first post
-        if (fetchedPosts.length > 0 && fetchedPosts[0].user) {
-          setArchitect(fetchedPosts[0].user);
+        if (!architectData || architectData.id !== architectId) {
+          // If the currently logged in user is not the architect we're looking for,
+          // we need to fetch the architect's data differently
+          // This would normally be a separate API call
+          
+          // For demo, we'll use a workaround
+          const allPosts = await getPosts();
+          const architectPost = allPosts.find(p => p.user_id === architectId);
+          
+          if (architectPost?.user) {
+            setArchitect(architectPost.user);
+          } else {
+            toast({
+              title: "Architect not found",
+              description: "Could not find the architect you're looking for",
+              variant: "destructive",
+            });
+            navigate('/dashboard');
+            return;
+          }
+        } else {
+          setArchitect(architectData);
         }
         
-        // Get profile stats
+        // Get architect's stats
         const profileStats = await getProfileStats(architectId, user?.id);
         setStats(profileStats);
+        
+        // Get architect's posts
+        const architectPosts = await getPosts(architectId);
+        setPosts(architectPosts);
       } catch (error) {
-        console.error('Error fetching architect data:', error);
+        console.error('Error fetching architect details:', error);
         toast({
-          title: "Error loading architect profile",
-          description: "Please try again later",
+          title: "Error loading data",
+          description: "Could not load architect details",
           variant: "destructive",
         });
       } finally {
@@ -54,14 +74,14 @@ const ArchitectDetail: React.FC = () => {
       }
     };
 
-    fetchArchitectData();
-  }, [architectId, user?.id, toast]);
+    fetchData();
+  }, [architectId, user, navigate, toast]);
 
   const handleFollow = async () => {
-    if (!user || !architectId || !stats) return;
+    if (!user || !architect || !stats) return;
 
     try {
-      await toggleFollow(user.id, architectId, !!stats.is_following);
+      await toggleFollow(user.id, architect.id, !!stats.is_following);
       setStats({
         ...stats,
         is_following: !stats.is_following,
@@ -73,8 +93,8 @@ const ArchitectDetail: React.FC = () => {
       toast({
         title: stats.is_following ? "Unfollowed" : "Following",
         description: stats.is_following 
-          ? "You are no longer following this architect" 
-          : "You are now following this architect",
+          ? `You are no longer following ${architect.username}` 
+          : `You are now following ${architect.username}`,
       });
     } catch (error) {
       console.error('Error toggling follow:', error);
@@ -87,18 +107,19 @@ const ArchitectDetail: React.FC = () => {
   };
 
   const handleHire = async () => {
-    if (!user || !architectId || !stats) return;
+    if (!user || !architect) return;
 
     try {
-      await hireArchitect(user.id, architectId);
-      setStats({
-        ...stats,
-        is_hired: true
+      await hireArchitect(user.id, architect.id);
+      
+      setStats(prev => {
+        if (!prev) return prev;
+        return { ...prev, is_hired: true };
       });
       
       toast({
         title: "Architect hired",
-        description: "You can now view their contact details",
+        description: `You've successfully hired ${architect.username}`,
       });
     } catch (error) {
       console.error('Error hiring architect:', error);
@@ -110,19 +131,31 @@ const ArchitectDetail: React.FC = () => {
     }
   };
 
-  if (!architect && !loading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navbar />
         <main className="container px-4 py-8">
-          <div className="max-w-md mx-auto text-center py-12">
-            <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h2 className="text-xl font-medium mb-2">Architect not found</h2>
-            <p className="text-muted-foreground mb-6">
-              The architect profile you're looking for doesn't exist or has been removed.
-            </p>
-            <Button onClick={() => navigate('/dashboard')}>
-              Return to Dashboard
+          <div className="text-center py-12">
+            <p>Loading architect details...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (!architect || !stats) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <main className="container px-4 py-8">
+          <div className="text-center py-12">
+            <p>Architect not found.</p>
+            <Button 
+              className="mt-4" 
+              onClick={() => navigate('/dashboard')}
+            >
+              Back to Dashboard
             </Button>
           </div>
         </main>
@@ -130,98 +163,133 @@ const ArchitectDetail: React.FC = () => {
     );
   }
 
+  const isCurrentUser = user?.id === architect.id;
+  const canHire = !isCurrentUser && user?.role === 'homeowner' && architect.role === 'architect';
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       <main className="container px-4 py-8">
-        {architect && stats && (
-          <>
-            <Card className="mb-8">
-              <CardHeader>
-                <CardTitle>{architect.username}</CardTitle>
-                <CardDescription>Architect</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                  <div className="flex-1 grid grid-cols-3 gap-4 text-center">
-                    <div>
-                      <div className="text-2xl font-bold">{stats.designs_count}</div>
-                      <div className="text-sm text-muted-foreground">Designs</div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold">{stats.followers_count}</div>
-                      <div className="text-sm text-muted-foreground">Followers</div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold">{stats.following_count}</div>
-                      <div className="text-sm text-muted-foreground">Following</div>
-                    </div>
-                  </div>
+        <Card className="mb-8">
+          <CardHeader>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div>
+                <CardTitle className="text-2xl">{architect.username}</CardTitle>
+                <CardDescription>
+                  {architect.role.charAt(0).toUpperCase() + architect.role.slice(1)}
+                </CardDescription>
+              </div>
+              
+              {!isCurrentUser && (
+                <div className="flex flex-wrap gap-2">
+                  <Button 
+                    variant={stats.is_following ? "outline" : "default"}
+                    onClick={handleFollow}
+                  >
+                    {stats.is_following ? (
+                      <>
+                        <UserCheck className="h-4 w-4 mr-2" />
+                        Following
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        Follow
+                      </>
+                    )}
+                  </Button>
                   
-                  {user && user.role === 'homeowner' && (
-                    <div className="flex gap-2">
-                      <Button 
-                        variant={stats.is_following ? "outline" : "default"} 
-                        onClick={handleFollow}
-                        className="flex-1"
-                      >
-                        <Users className="mr-2 h-4 w-4" />
-                        {stats.is_following ? "Following" : "Follow"}
+                  {canHire && (
+                    stats.is_hired ? (
+                      <Button variant="outline">
+                        <BriefcaseIcon className="h-4 w-4 mr-2" />
+                        Hired
                       </Button>
-                      
-                      {stats.is_hired ? (
-                        <Button 
-                          variant="default" 
-                          className="flex-1"
-                        >
-                          <Mail className="mr-2 h-4 w-4" />
-                          Contact
-                        </Button>
-                      ) : (
-                        <Button 
-                          variant="secondary" 
-                          onClick={handleHire}
-                          className="flex-1"
-                        >
-                          Hire
-                        </Button>
-                      )}
-                    </div>
+                    ) : (
+                      <Button 
+                        variant="secondary"
+                        onClick={handleHire}
+                      >
+                        <BriefcaseIcon className="h-4 w-4 mr-2" />
+                        Hire Now
+                      </Button>
+                    )
                   )}
                 </div>
-                
-                {stats.is_hired && architect.contact && (
-                  <Card className="bg-muted/40">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm">Contact Information</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="whitespace-pre-line text-sm">{architect.contact}</p>
-                    </CardContent>
-                  </Card>
-                )}
-              </CardContent>
-            </Card>
+              )}
+            </div>
+          </CardHeader>
+          
+          <CardContent className="grid gap-6 md:grid-cols-3">
+            <div className="flex items-center space-x-2">
+              <Users className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <div className="text-sm font-medium">Followers</div>
+                <div>{stats.followers_count}</div>
+              </div>
+            </div>
             
-            <Tabs defaultValue="designs">
-              <TabsList className="mb-4">
-                <TabsTrigger value="designs">Designs</TabsTrigger>
-              </TabsList>
-              <TabsContent value="designs">
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  {!loading && posts.length === 0 && (
-                    <div className="col-span-full py-12 text-center">
-                      <p className="text-muted-foreground">This architect hasn't posted any designs yet.</p>
-                    </div>
-                  )}
-                  {posts.map(post => (
-                    <DesignCard key={post.id} post={post} />
-                  ))}
+            <div className="flex items-center space-x-2">
+              <Users className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <div className="text-sm font-medium">Following</div>
+                <div>{stats.following_count}</div>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <BriefcaseIcon className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <div className="text-sm font-medium">Designs</div>
+                <div>{stats.designs_count}</div>
+              </div>
+            </div>
+            
+            {(isCurrentUser || stats.is_hired) && architect.contact && (
+              <div className="md:col-span-3 mt-4 p-4 bg-purple-50 rounded-md">
+                <div className="flex items-start space-x-2">
+                  <Mail className="h-5 w-5 text-purple-500 mt-1" />
+                  <div>
+                    <div className="text-sm font-medium text-purple-700">Contact Information</div>
+                    <div className="whitespace-pre-line">{architect.contact}</div>
+                  </div>
                 </div>
-              </TabsContent>
-            </Tabs>
-          </>
-        )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        
+        <h2 className="text-xl font-bold mb-4">Designs by {architect.username}</h2>
+        
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {posts.length === 0 && (
+            <div className="col-span-full py-12 text-center">
+              <p className="text-muted-foreground">
+                {isCurrentUser 
+                  ? "You haven't posted any designs yet." 
+                  : `${architect.username} hasn't posted any designs yet.`}
+              </p>
+              
+              {isCurrentUser && (
+                <Button 
+                  className="mt-4" 
+                  onClick={() => navigate('/post/create')}
+                >
+                  Post a Design
+                </Button>
+              )}
+            </div>
+          )}
+          
+          {posts.map(post => (
+            <DesignCard 
+              key={post.id} 
+              post={post} 
+              currentUser={user}
+              showControls={false}
+            />
+          ))}
+        </div>
       </main>
     </div>
   );

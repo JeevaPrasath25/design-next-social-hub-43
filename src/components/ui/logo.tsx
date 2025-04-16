@@ -16,7 +16,9 @@ const Logo: React.FC<LogoProps> = ({ size = 'medium', className = '' }) => {
 
   return (
     <Link to="/" className={`font-bold ${sizeClasses[size]} ${className}`}>
-      <span className="bg-clip-text text-transparent bg-gradient-to-r from-brandPurple to-brandPurpleDark">DN</span>
+      <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-violet-700">
+        DesigNest
+      </span>
     </Link>
   );
 };
