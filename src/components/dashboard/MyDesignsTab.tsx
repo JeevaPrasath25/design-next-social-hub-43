@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Post, User } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Briefcase } from 'lucide-react';
+import { Briefcase, Upload } from 'lucide-react';
 
 interface MyDesignsTabProps {
   posts: Post[];
